@@ -1,0 +1,38 @@
+export const SAMPLE_PRODUCTS = [
+  {
+    id: '1',
+    title: 'Casio FX-991EX ClassWiz Calculator',
+    price: 1800,
+    category: 'Electronics',
+    condition: 'Like New',
+    seller: 'Computer Science Dept.',
+    image: 'https://placehold.co/400x300?text=Calculator',
+  },
+  {
+    id: '2',
+    title: 'Data Structures & Algorithms Textbook',
+    price: 350,
+    category: 'Books',
+    condition: 'Used - Good',
+    seller: 'Software Engineering Dept.',
+    image: 'https://placehold.co/400x300?text=DSA+Book',
+  },
+  {
+    id: '3',
+    title: 'DIU Varsity Jacket (Medium)',
+    price: 900,
+    category: 'Clothing',
+    condition: 'Barely Used',
+    seller: 'BBA Dept.',
+    image: 'https://placehold.co/400x300?text=Jacket',
+  },
+  {
+    id: '4',
+    title: 'Logitech Wireless Mouse M185',
+    price: 600,
+    category: 'Electronics',
+    condition: 'Fair',
+    seller: 'EEE Dept.',
+    image: 'https://placehold.co/400x300?text=Mouse',
+  },
+];
