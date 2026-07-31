@@ -18,23 +18,25 @@ export default function Navbar() {
 
         {/* Navigation */}
         <div className="flex items-center gap-8 text-base font-medium text-gray-700">
-          <Link href="/" className="hover:text-blue-600">
+          <Link href="/" className="hover:text-blue-600 transition">
             Browse Items
           </Link>
 
-          <Link href="/sell" className="hover:text-blue-600">
+          <Link href="/sell" className="hover:text-blue-600 transition">
             Sell Item
           </Link>
 
-          <Link href="/dashboard" className="hover:text-blue-600">
+          <Link href="/dashboard" className="hover:text-blue-600 transition">
             OneCard Balance
           </Link>
         </div>
 
-        {/* Login */}
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition">
-          Login with DIU ID
-        </button>
+        {/* Login Button */}
+        <Link href="/login">
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition">
+            Login with DIU ID
+          </button>
+        </Link>
 
       </div>
     </nav>
