@@ -1,6 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
+  const pathname = usePathname();
+
   return (
     <nav className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -31,13 +36,29 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Login Button */}
-        <Link href="/login">
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition">
+        {/* Right Button */}
+        {pathname === "/login" ? (
+          <Link
+            href="/register"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition"
+          >
+            Register
+          </Link>
+        ) : pathname === "/register" ? (
+          <Link
+            href="/login"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition"
+          >
+            Login
+          </Link>
+        ) : (
+          <Link
+            href="/login"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition"
+          >
             Login with DIU ID
-          </button>
-        </Link>
-
+          </Link>
+        )}
       </div>
     </nav>
   );

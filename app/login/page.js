@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
@@ -41,8 +42,8 @@ export default function LoginPage() {
       </h1>
 
       <form onSubmit={handleLogin}>
-        {/* Student ID */}
 
+        {/* Student ID */}
         <label style={labelStyle}>DIU Student ID</label>
 
         <input
@@ -55,7 +56,6 @@ export default function LoginPage() {
         />
 
         {/* Password */}
-
         <label style={labelStyle}>Password</label>
 
         <div style={{ position: "relative" }}>
@@ -78,10 +78,14 @@ export default function LoginPage() {
         </div>
 
         {/* Forgot Password */}
-
-        <div style={{ textAlign: "right", marginBottom: "25px" }}>
-          <a
-            href="#"
+        <div
+          style={{
+            textAlign: "right",
+            marginBottom: "25px",
+          }}
+        >
+          <Link
+            href="/forgot-password"
             style={{
               color: "#2563eb",
               textDecoration: "none",
@@ -89,11 +93,10 @@ export default function LoginPage() {
             }}
           >
             Forgot Password?
-          </a>
+          </Link>
         </div>
 
         {/* Login Button */}
-
         <button type="submit" style={loginButton}>
           Login
         </button>
@@ -101,11 +104,11 @@ export default function LoginPage() {
         <hr style={{ margin: "35px 0" }} />
 
         {/* Google Button */}
-
         <button type="button" style={googleButton}>
           Continue with Google
         </button>
 
+        {/* Register */}
         <p
           style={{
             textAlign: "center",
@@ -113,8 +116,8 @@ export default function LoginPage() {
           }}
         >
           Don't have an account?{" "}
-          <a
-            href="#"
+          <Link
+            href="/register"
             style={{
               color: "#2563eb",
               fontWeight: "bold",
@@ -122,8 +125,9 @@ export default function LoginPage() {
             }}
           >
             Register
-          </a>
+          </Link>
         </p>
+
       </form>
     </main>
   );
