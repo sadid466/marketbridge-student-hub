@@ -11,7 +11,7 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('newest');
 
-  // Filter products by search and category
+  // Filter (search and category)
   const filteredProducts = SAMPLE_PRODUCTS.filter((product) => {
     const matchesSearch = product.title
       .toLowerCase()

@@ -32,7 +32,7 @@ export default function Navbar() {
           </Link>
 
           <Link href="/dashboard" className="hover:text-blue-600 transition">
-            OneCard Balance
+            Dashboard
           </Link>
         </div>
 
