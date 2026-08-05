@@ -2,6 +2,8 @@
 
 import { useState, use } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
 // Import your existing mock products list
 import { SAMPLE_PRODUCTS } from '@/data/products';
 
@@ -13,12 +15,22 @@ export default function ItemDetailsPage({ params: paramsPromise }) {
   const item = SAMPLE_PRODUCTS.find((p) => String(p.id) === String(itemId)) || SAMPLE_PRODUCTS[0];
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [purchaseSuccess, setPurchaseSuccess] = useState(false);
+const [purchaseSuccess, setPurchaseSuccess] = useState(false);
 
-  const handleConfirmEscrow = () => {
-    setPurchaseSuccess(true);
-  };
+const router = useRouter();
 
+const handleConfirmEscrow = () => {
+  setPurchaseSuccess(true);
+
+  // Automatically go to Escrow page after 1.5 seconds
+  setTimeout(() => {
+  router.push(
+    `/escrow?item=${encodeURIComponent(item.title)}&seller=${encodeURIComponent(
+      item.seller?.name || "DIU Student"
+    )}&buyer=Mohammed Omar&amount=${item.price}`
+  );
+}, 2000);
+};
   return (
     <main className="min-h-screen bg-gray-50 py-10 px-4 md:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -136,15 +148,10 @@ export default function ItemDetailsPage({ params: paramsPromise }) {
                 </div>
                 <h3 className="text-lg font-bold text-gray-900">Escrow Locked Successfully!</h3>
                 <p className="text-xs text-gray-500">
-                  Your funds are now held in escrow. Check your dashboard to view the transaction and access your QR verification code for meetup.
-                </p>
+  Your funds are now securely held in Escrow. You will be redirected to your Escrow Receipt where you can view your QR Code and 6-digit Verification PIN.
+</p>
                 <div className="flex gap-2">
-                  <Link
-                    href="/dashboard"
-                    className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs text-center transition"
-                  >
-                    Go to Dashboard
-                  </Link>
+                  
                 </div>
               </div>
             )}
