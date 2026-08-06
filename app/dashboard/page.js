@@ -3,10 +3,7 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { USER } from "@/data/user";
-
-// Mock user data for prototyping
-
+import { USER as INITIAL_USER } from "@/data/user";
 
 const MOCK_MY_LISTINGS = [
   {
@@ -25,7 +22,7 @@ const MOCK_MY_LISTINGS = [
   },
 ];
 
-const MOCK_PURCHASES = [
+const INITIAL_PURCHASES = [
   {
     id: "P-1001",
     title: "Casio FX-991EX ClassWiz Calculator",
@@ -57,31 +54,52 @@ const MOCK_TRANSACTIONS = [
 ];
 
 export default function DashboardPage() {
-
   const searchParams = useSearchParams();
-
-  const defaultTab =
-    searchParams.get("tab") || "listings";
+  const defaultTab = searchParams.get("tab") || "listings";
 
   const [activeTab, setActiveTab] = useState(defaultTab);
+  
+  // Interactive state for Purchases and User OneCard Balances
+  const [purchases, setPurchases] = useState(INITIAL_PURCHASES);
+  const [user, setUser] = useState(INITIAL_USER);
+
+  // Handle Cancel & Refund
+  const handleCancelPurchase = (purchaseId, amount, title) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to cancel the purchase for "${title}"? ৳${amount} will be refunded immediately to your OneCard.`
+    );
+
+    if (!confirmed) return;
+
+    // 1. Remove from active purchases
+    setPurchases((prev) => prev.filter((item) => item.id !== purchaseId));
+
+    // 2. Update balances: add amount back to available, remove from escrow hold
+    setUser((prev) => ({
+      ...prev,
+      oneCardBalance: prev.oneCardBalance + amount,
+      escrowInHold: Math.max(0, prev.escrowInHold - amount),
+    }));
+  };
 
   return (
     <main className="min-h-screen bg-gray-50 py-10 px-4 md:px-8">
       <div className="max-w-5xl mx-auto space-y-8">
+        
         {/* Profile Header */}
         <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-blue-600 text-white font-bold text-2xl flex items-center justify-center">
-              {USER.name.charAt(0)}
+              {user.name.charAt(0)}
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {USER.name}
+                {user.name}
               </h1>
               <p className="text-sm text-gray-500">
-                {USER.email} •{" "}
+                {user.email} •{" "}
                 <span className="font-medium text-gray-700">
-                  {USER.department}
+                  {user.department}
                 </span>
               </p>
             </div>
@@ -102,7 +120,7 @@ export default function DashboardPage() {
               OneCard Available Balance
             </p>
             <h2 className="text-3xl font-extrabold mt-2">
-              ৳ {USER.oneCardBalance.toLocaleString()}
+              ৳ {user.oneCardBalance.toLocaleString()}
             </h2>
             <p className="text-xs text-blue-100 mt-2">
               Ready for instant campus escrow purchases
@@ -114,7 +132,7 @@ export default function DashboardPage() {
               Funds Held in Escrow
             </p>
             <h2 className="text-3xl font-extrabold text-gray-800 mt-2">
-              ৳ {USER.escrowInHold.toLocaleString()}
+              ৳ {user.escrowInHold.toLocaleString()}
             </h2>
             <p className="text-xs text-gray-500 mt-2">
               Will be released upon item handover verification
@@ -143,7 +161,7 @@ export default function DashboardPage() {
                   : "border-transparent text-gray-500 hover:text-gray-700"
               }`}
             >
-              Purchases ({MOCK_PURCHASES.length})
+              Purchases ({purchases.length})
             </button>
 
             <button
@@ -176,13 +194,13 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
-                      <span className="px-3 py-1 bg-yellow-100 text-yellow-700 font-medium text-xs rounded-full">
+                      <span className="px-3 py-1 bg-amber-100 text-amber-800 border border-amber-200 font-medium text-xs rounded-full">
                         Buyer Waiting
                       </span>
 
                       <Link
                         href={`/verify?item=${encodeURIComponent(item.title)}&amount=${item.price}&buyer=Mohammed Omar`}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition"
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition shadow-sm"
                       >
                         Verify Buyer
                       </Link>
@@ -200,67 +218,72 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* TAB 2: Purchases */}
-            {activeTab === "purchases" && (
-              <div className="space-y-5">
-                {MOCK_PURCHASES.map((purchase) => (
-                  <div
-                    key={purchase.id}
-                    className="border border-gray-200 rounded-2xl p-6 bg-gray-50/40"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900">
-                          {purchase.title}
-                        </h3>
+           {/* TAB 2: Purchases */}
+{activeTab === "purchases" && (
+  <div className="space-y-4">
+    {purchases.length === 0 ? (
+      <div className="text-center py-12 space-y-3">
+        <p className="text-gray-400 text-sm font-medium">No active escrow purchases.</p>
+        <Link
+          href="/"
+          className="inline-block text-xs font-bold text-blue-600 hover:underline"
+        >
+          Browse Campus Listings →
+        </Link>
+      </div>
+    ) : (
+      purchases.map((purchase) => (
+        <div
+          key={purchase.id}
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 border border-gray-100 rounded-2xl bg-gray-50/30 hover:border-gray-200 transition gap-4"
+        >
+          {/* Left Column: Product Details */}
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-gray-900 text-base">
+                {purchase.title}
+              </h3>
+              <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 text-xs font-semibold rounded-full border border-amber-200">
+                {purchase.status}
+              </span>
+            </div>
 
-                        <p className="text-gray-500 mt-1">
-                          Seller:
-                          <span className="font-semibold text-gray-800">
-                            {" "}
-                            {purchase.seller}
-                          </span>
-                        </p>
+            <div className="text-xs text-gray-500 space-y-0.5">
+              <p>Seller: <span className="font-semibold text-gray-800">{purchase.seller}</span></p>
+              <p>Amount: <span className="font-bold text-blue-600">৳ {purchase.amount}</span></p>
+              <p>Meetup: <span className="font-medium text-gray-700">{purchase.meetup}</span></p>
+            </div>
+          </div>
 
-                        <p className="text-gray-500">
-                          Amount:
-                          <span className="font-bold text-blue-600">
-                            {" "}
-                            ৳ {purchase.amount}
-                          </span>
-                        </p>
+          {/* Right Column: PIN Widget + Cancel Action Stack */}
+          <div className="flex flex-col items-center gap-2 w-full sm:w-auto shrink-0">
+            {/* Verification PIN Box */}
+            <div className="bg-blue-50/80 border border-blue-100 rounded-xl px-5 py-2.5 text-center w-full sm:w-56">
+              <p className="text-[10px] uppercase font-bold text-blue-500 tracking-wider">
+                Verification PIN
+              </p>
+              <p className="text-2xl font-black text-blue-600 tracking-widest my-0.5">
+                {purchase.pin}
+              </p>
+              <p className="text-[10px] text-gray-400">
+                Show after item inspection
+              </p>
+            </div>
 
-                        <p className="text-gray-500">
-                          Meetup:
-                          <span className="font-medium">
-                            {" "}
-                            {purchase.meetup}
-                          </span>
-                        </p>
+            {/* Cancel Action Button directly underneath */}
+            <button
+              onClick={() => handleCancelPurchase(purchase.id, purchase.amount, purchase.title)}
+              className="text-xs font-semibold text-gray-400 hover:text-red-600 hover:underline transition py-1"
+            >
+              Cancel Trade
+            </button>
+          </div>
 
-                        <span className="inline-block mt-3 px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
-                          {purchase.status}
-                        </span>
-                      </div>
-
-                      <div className="text-center bg-blue-50 rounded-xl px-6 py-4">
-                        <p className="text-xs text-gray-500">
-                          Verification PIN
-                        </p>
-
-                        <h2 className="text-3xl font-bold tracking-widest text-blue-600 mt-1">
-                          {purchase.pin}
-                        </h2>
-
-                        <p className="text-xs text-gray-500 mt-2">
-                          Give this PIN to the seller after receiving the item.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+        </div>
+      ))
+    )}
+  </div>
+)}
 
             {/* TAB 3: Escrow History */}
             {activeTab === "transactions" && (
@@ -273,7 +296,11 @@ export default function DashboardPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span
-                          className={`text-xs font-bold px-2 py-0.5 rounded ${tx.type === "Bought" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}
+                          className={`text-xs font-bold px-2 py-0.5 rounded ${
+                            tx.type === "Bought"
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-purple-100 text-purple-700"
+                          }`}
                         >
                           {tx.type}
                         </span>
