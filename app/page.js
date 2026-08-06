@@ -1,31 +1,49 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Search } from 'lucide-react';
-import { SAMPLE_PRODUCTS } from '@/data/products';
-import ProductCard from '@/components/ProductCard';
+import { useState, useEffect } from "react";
+import { Search } from "lucide-react";
+import ProductCard from "@/components/ProductCard";
 
-const CATEGORIES = ['All', 'Electronics', 'Books', 'Clothing'];
+const CATEGORIES = ["All", "Electronics", "Books", "Clothing"];
 
 export default function Home() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [sortBy, setSortBy] = useState('newest');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [sortBy, setSortBy] = useState("newest");
+  const [products, setProducts] = useState([]);
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch("/api/products");
+        const result = await res.json();
+
+        if (result.success) {
+          setProducts(result.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   // Filter (search and category)
-  const filteredProducts = SAMPLE_PRODUCTS.filter((product) => {
-    const matchesSearch = product.title
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === 'All' || product.category === selectedCategory;
+  const filteredProducts = products
+    .filter((product) => {
+      const matchesSearch = product.title
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      const matchesCategory =
+        selectedCategory === "All" || product.category === selectedCategory;
 
-    return matchesSearch && matchesCategory;
-  }).sort((a, b) => {
-    if (sortBy === 'low-to-high') return a.price - b.price;
-    if (sortBy === 'high-to-low') return b.price - a.price;
-    return 0; // Default/Newest
-  });
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      if (sortBy === "low-to-high") return a.price - b.price;
+      if (sortBy === "high-to-low") return b.price - a.price;
+      return 0; // Default/Newest
+    });
 
   return (
     <main className="min-h-screen bg-gray-50 pb-12">
@@ -40,10 +58,8 @@ export default function Home() {
       </section>
 
       <div className="max-w-6xl mx-auto px-6 space-y-6">
-        
         {/* Integrated Filter Toolbar Card */}
         <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs space-y-4">
-          
           {/* Top Row: Full-Width Search Bar + Sort Dropdown */}
           <div className="flex flex-col sm:flex-row items-center gap-3">
             {/* Search Bar with Lucide Icon */}
@@ -60,7 +76,9 @@ export default function Home() {
 
             {/* Sort Dropdown */}
             <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
-              <span className="text-xs text-gray-500 font-medium whitespace-nowrap">Sort by:</span>
+              <span className="text-xs text-gray-500 font-medium whitespace-nowrap">
+                Sort by:
+              </span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
@@ -81,22 +99,21 @@ export default function Home() {
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
                   selectedCategory === cat
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'bg-gray-100/80 hover:bg-gray-200/80 text-gray-600'
+                    ? "bg-blue-600 text-white shadow-xs"
+                    : "bg-gray-100/80 hover:bg-gray-200/80 text-gray-600"
                 }`}
               >
                 {cat}
               </button>
             ))}
           </div>
-
         </div>
 
         {/* Product Grid */}
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product._id} product={product} />
             ))}
           </div>
         ) : (
@@ -107,7 +124,6 @@ export default function Home() {
             </p>
           </div>
         )}
-
       </div>
     </main>
   );
