@@ -3,16 +3,10 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { USER } from "@/data/user";
 
 // Mock user data for prototyping
 
-const MOCK_USER = {
-  name: "Sadid Ahmed",
-  email: "sadid242-35-612@diu.edu.bd",
-  department: "Software Engineering",
-  oneCardBalance: 2500,
-  escrowInHold: 1800,
-};
 
 const MOCK_MY_LISTINGS = [
   {
@@ -78,16 +72,16 @@ export default function DashboardPage() {
         <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-blue-600 text-white font-bold text-2xl flex items-center justify-center">
-              {MOCK_USER.name.charAt(0)}
+              {USER.name.charAt(0)}
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {MOCK_USER.name}
+                {USER.name}
               </h1>
               <p className="text-sm text-gray-500">
-                {MOCK_USER.email} •{" "}
+                {USER.email} •{" "}
                 <span className="font-medium text-gray-700">
-                  {MOCK_USER.department}
+                  {USER.department}
                 </span>
               </p>
             </div>
@@ -108,7 +102,7 @@ export default function DashboardPage() {
               OneCard Available Balance
             </p>
             <h2 className="text-3xl font-extrabold mt-2">
-              ৳ {MOCK_USER.oneCardBalance.toLocaleString()}
+              ৳ {USER.oneCardBalance.toLocaleString()}
             </h2>
             <p className="text-xs text-blue-100 mt-2">
               Ready for instant campus escrow purchases
@@ -120,7 +114,7 @@ export default function DashboardPage() {
               Funds Held in Escrow
             </p>
             <h2 className="text-3xl font-extrabold text-gray-800 mt-2">
-              ৳ {MOCK_USER.escrowInHold.toLocaleString()}
+              ৳ {USER.escrowInHold.toLocaleString()}
             </h2>
             <p className="text-xs text-gray-500 mt-2">
               Will be released upon item handover verification

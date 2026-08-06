@@ -3,6 +3,7 @@
 import { useState, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { USER } from "@/data/user";
 
 // Import your existing mock products list
 import { SAMPLE_PRODUCTS } from '@/data/products';
@@ -18,18 +19,25 @@ export default function ItemDetailsPage({ params: paramsPromise }) {
 const [purchaseSuccess, setPurchaseSuccess] = useState(false);
 
 const router = useRouter();
+const USER_BALANCE = 1000;
+
+const MOCK_BALANCE = 2500; // Same balance shown in Dashboard
 
 const handleConfirmEscrow = () => {
+  if (USER.oneCardBalance < item.price) {
+    alert("Insufficient OneCard Balance!");
+    return;
+  }
+
   setPurchaseSuccess(true);
 
-  // Automatically go to Escrow page after 1.5 seconds
   setTimeout(() => {
-  router.push(
-    `/escrow?item=${encodeURIComponent(item.title)}&seller=${encodeURIComponent(
-      item.seller?.name || "DIU Student"
-    )}&buyer=Mohammed Omar&amount=${item.price}`
-  );
-}, 2000);
+    router.push(
+      `/escrow?item=${encodeURIComponent(item.title)}&seller=${encodeURIComponent(
+        item.seller?.name || "DIU Student"
+      )}&buyer=Mohammed Omar&amount=${item.price}`
+    );
+  }, 2000);
 };
   return (
     <main className="min-h-screen bg-gray-50 py-10 px-4 md:px-8">
