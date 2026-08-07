@@ -3,21 +3,44 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
+import { signIn } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const registered = searchParams.get("registered");
+
   const [studentId, setStudentId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    console.log({
-      studentId,
-      password,
-    });
+    try {
+      const res = await signIn("credentials", {
+        studentId,
+        password,
+        redirect: false,
+      });
 
-    alert("Login Successful!");
+      if (res?.error) {
+        setError(res.error);
+      } else {
+        // Updated redirect target from /browse to / (or /dashboard)
+        router.push("/");
+        router.refresh();
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -41,11 +64,39 @@ export default function LoginPage() {
         Login to your MarketBridge Account
       </h1>
 
+      {registered && (
+        <div
+          style={{
+            padding: "12px",
+            marginBottom: "20px",
+            background: "#d1fae5",
+            color: "#065f46",
+            borderRadius: "8px",
+            textAlign: "center",
+          }}
+        >
+          Account created successfully! Please log in.
+        </div>
+      )}
+
+      {error && (
+        <div
+          style={{
+            padding: "12px",
+            marginBottom: "20px",
+            background: "#fee2e2",
+            color: "#991b1b",
+            borderRadius: "8px",
+            textAlign: "center",
+          }}
+        >
+          {error}
+        </div>
+      )}
+
       <form onSubmit={handleLogin}>
-
-        {/* Student ID */}
+        {/* DIU Student ID */}
         <label style={labelStyle}>DIU Student ID</label>
-
         <input
           type="text"
           placeholder="221-35-XXXX"
@@ -57,7 +108,6 @@ export default function LoginPage() {
 
         {/* Password */}
         <label style={labelStyle}>Password</label>
-
         <div style={{ position: "relative" }}>
           <input
             type={showPassword ? "text" : "password"}
@@ -97,14 +147,18 @@ export default function LoginPage() {
         </div>
 
         {/* Login Button */}
-        <button type="submit" style={loginButton}>
-          Login
+        <button type="submit" disabled={loading} style={loginButton}>
+          {loading ? "Logging in..." : "Login"}
         </button>
 
         <hr style={{ margin: "35px 0" }} />
 
         {/* Google Button */}
-        <button type="button" style={googleButton}>
+        <button
+          type="button"
+          onClick={() => signIn("google")}
+          style={googleButton}
+        >
           Continue with Google
         </button>
 
@@ -127,7 +181,6 @@ export default function LoginPage() {
             Register
           </Link>
         </p>
-
       </form>
     </main>
   );

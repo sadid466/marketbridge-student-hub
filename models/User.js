@@ -4,13 +4,15 @@ const UserSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    department: { type: String },
+    studentId: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
     oneCardBalance: { type: Number, default: 0 },
     escrowInHold: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
 
-const User = mongoose.models.User || mongoose.model("User", UserSchema);
-
-export default User;
+export default mongoose.model("User", UserSchema);

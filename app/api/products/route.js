@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/database";
 import Product from "@/models/Product";
+import User from "@/models/User";
 
 // GET /api/products - Fetch all active products
 export async function GET() {
