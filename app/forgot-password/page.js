@@ -5,13 +5,51 @@ import Link from "next/link";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-  const handleReset = (e) => {
+  const handleReset = async (e) => {
     e.preventDefault();
+    setMessage("");
+    setError("");
 
-    console.log(email);
+    // Validate DIU email domain client-side
+    if (!email.toLowerCase().endsWith("@diu.edu.bd")) {
+      setError("Please enter a valid DIU student email (@diu.edu.bd).");
+      return;
+    }
 
-    alert("Password reset link sent!");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      // Verify that response is valid JSON before parsing
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server endpoint error or invalid response format.");
+      }
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to send reset link.");
+      }
+
+      setMessage(
+        "If an account with that email exists, a password reset link has been sent."
+      );
+      setEmail("");
+    } catch (err) {
+      setError(err.message || "An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,8 +80,42 @@ export default function ForgotPasswordPage() {
           marginBottom: "35px",
         }}
       >
-        Enter your DIU email address and we'll send you a password reset link.
+        Enter your official DIU email address and we'll send you a password reset link.
       </p>
+
+      {/* Success Notification */}
+      {message && (
+        <div
+          style={{
+            padding: "12px 16px",
+            marginBottom: "20px",
+            background: "#d1fae5",
+            color: "#065f46",
+            borderRadius: "8px",
+            fontSize: "14px",
+            textAlign: "center",
+          }}
+        >
+          {message}
+        </div>
+      )}
+
+      {/* Error Notification */}
+      {error && (
+        <div
+          style={{
+            padding: "12px 16px",
+            marginBottom: "20px",
+            background: "#fee2e2",
+            color: "#991b1b",
+            borderRadius: "8px",
+            fontSize: "14px",
+            textAlign: "center",
+          }}
+        >
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleReset}>
         <label style={labelStyle}>DIU Email</label>
@@ -57,8 +129,16 @@ export default function ForgotPasswordPage() {
           style={inputStyle}
         />
 
-        <button type="submit" style={buttonStyle}>
-          Send Reset Link
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            ...buttonStyle,
+            backgroundColor: loading ? "#93c5fd" : "#2563eb",
+            cursor: loading ? "not-allowed" : "pointer",
+          }}
+        >
+          {loading ? "Sending Link..." : "Send Reset Link"}
         </button>
       </form>
 
@@ -108,5 +188,5 @@ const buttonStyle = {
   border: "none",
   borderRadius: "8px",
   fontSize: "18px",
-  cursor: "pointer",
+  transition: "background-color 0.2s ease",
 };

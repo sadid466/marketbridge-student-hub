@@ -1,44 +1,83 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { USER } from "@/data/user";
-
-// Import your existing mock products list
-import { SAMPLE_PRODUCTS } from '@/data/products';
+import { useSession } from 'next-auth/react';
 
 export default function ItemDetailsPage({ params: paramsPromise }) {
   const params = use(paramsPromise);
   const itemId = params.id;
+  const router = useRouter();
+  const { data: session } = useSession();
 
-  // Find the matching product by ID from data/products.js
-  const item = SAMPLE_PRODUCTS.find((p) => String(p.id) === String(itemId)) || SAMPLE_PRODUCTS[0];
-
+  const [item, setItem] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-const [purchaseSuccess, setPurchaseSuccess] = useState(false);
+  const [purchaseSuccess, setPurchaseSuccess] = useState(false);
 
-const router = useRouter();
-const USER_BALANCE = 1000;
+  // Fetch item details dynamically from API
+  useEffect(() => {
+    if (!itemId) return;
 
-const MOCK_BALANCE = 2500; // Same balance shown in Dashboard
+    fetch(`/api/items/${itemId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch item");
+        return res.json();
+      })
+      .then((data) => {
+        if (data.success) {
+          setItem(data.item);
+        }
+      })
+      .catch((err) => console.error("Error loading item:", err))
+      .finally(() => setLoading(false));
+  }, [itemId]);
 
-const handleConfirmEscrow = () => {
-  if (USER.oneCardBalance < item.price) {
-    alert("Insufficient OneCard Balance!");
-    return;
+  const handleConfirmEscrow = () => {
+    if (!session) {
+      alert("Please log in to make a purchase.");
+      router.push(`/login?callbackUrl=/items/${itemId}`);
+      return;
+    }
+
+    const currentBalance = session.user?.oneCardBalance ?? 0;
+
+    if (currentBalance < item.price) {
+      alert("Insufficient OneCard Balance!");
+      return;
+    }
+
+    setPurchaseSuccess(true);
+
+    setTimeout(() => {
+      router.push(
+        `/escrow?item=${encodeURIComponent(item.title)}&seller=${encodeURIComponent(
+          item.seller?.name || "DIU Student"
+        )}&buyer=${encodeURIComponent(session.user.name)}&amount=${item.price}`
+      );
+    }, 2000);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-gray-500 font-medium">Loading item details...</p>
+      </div>
+    );
   }
 
-  setPurchaseSuccess(true);
-
-  setTimeout(() => {
-    router.push(
-      `/escrow?item=${encodeURIComponent(item.title)}&seller=${encodeURIComponent(
-        item.seller?.name || "DIU Student"
-      )}&buyer=Mohammed Omar&amount=${item.price}`
+  if (!item) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 space-y-4">
+        <p className="text-gray-500 font-medium">Listing not found.</p>
+        <Link href="/" className="text-blue-600 font-bold hover:underline">
+          ← Back to Marketplace
+        </Link>
+      </div>
     );
-  }, 2000);
-};
+  }
+
   return (
     <main className="min-h-screen bg-gray-50 py-10 px-4 md:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -57,11 +96,15 @@ const handleConfirmEscrow = () => {
           
           {/* Left: Product Image / Display */}
           <div className="md:col-span-1 space-y-4">
-            <div className="w-full h-full bg-linear-to-tr from-blue-100 to-indigo-100 border border-gray-200 rounded-2xl flex items-center justify-center text-gray-400 font-medium overflow-hidden">
-              {item.image ? (
-                <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+            <div className="w-full h-64 md:h-full bg-linear-to-tr from-blue-100 to-indigo-100 border border-gray-200 rounded-2xl flex items-center justify-center text-gray-400 font-medium overflow-hidden">
+              {item.image || item.imageUrl ? (
+                <img
+                  src={item.image || item.imageUrl}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <span>Product Image</span>
+                <span>No Product Image</span>
               )}
             </div>
           </div>
@@ -87,8 +130,12 @@ const handleConfirmEscrow = () => {
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-400 uppercase font-bold">Seller</p>
-                <p className="font-bold text-gray-900 text-sm">{item.seller?.name || 'DIU Student'}</p>
-                <p className="text-xs text-gray-500">{item.seller?.department || 'Daffodil International University'}</p>
+                <p className="font-bold text-gray-900 text-sm">
+                  {item.seller?.name || 'DIU Student'}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {item.seller?.department || 'Daffodil International University'}
+                </p>
               </div>
               <span className="text-sm font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-lg">
                 {item.seller?.rating || '5.0 ★'}
@@ -98,7 +145,7 @@ const handleConfirmEscrow = () => {
             {/* Action Button */}
             <button
               onClick={() => setIsModalOpen(true)}
-              className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition shadow-sm flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition shadow-sm flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>Proceed to payment</span>
               <span>→</span>
@@ -137,13 +184,13 @@ const handleConfirmEscrow = () => {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-xl text-xs hover:bg-gray-50 transition"
+                    className="flex-1 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-xl text-xs hover:bg-gray-50 transition cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleConfirmEscrow}
-                    className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition"
+                    className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition cursor-pointer"
                   >
                     Lock Funds & Buy
                   </button>
@@ -156,11 +203,8 @@ const handleConfirmEscrow = () => {
                 </div>
                 <h3 className="text-lg font-bold text-gray-900">Escrow Locked Successfully!</h3>
                 <p className="text-xs text-gray-500">
-  Your funds are now securely held in Escrow. You will be redirected to your Escrow Receipt where you can view your QR Code and 6-digit Verification PIN.
-</p>
-                <div className="flex gap-2">
-                  
-                </div>
+                  Your funds are now securely held in Escrow. You will be redirected to your Escrow Receipt where you can view your QR Code and 6-digit Verification PIN.
+                </p>
               </div>
             )}
           </div>
