@@ -1,21 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const registered = searchParams.get("registered");
+  const { data: session, status } = useSession();
 
   const [studentId, setStudentId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Automatically redirect authenticated users away from the login page
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push("/");
+    }
+  }, [status, router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -32,7 +40,6 @@ export default function LoginPage() {
       if (res?.error) {
         setError(res.error);
       } else {
-        // Updated redirect target from /browse to / (or /dashboard)
         router.push("/");
         router.refresh();
       }
@@ -156,7 +163,7 @@ export default function LoginPage() {
         {/* Google Button */}
         <button
           type="button"
-          onClick={() => signIn("google")}
+          onClick={() => signIn("google", { callbackUrl: "/" })}
           style={googleButton}
         >
           Continue with Google
