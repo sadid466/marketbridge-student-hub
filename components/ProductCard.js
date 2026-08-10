@@ -2,6 +2,7 @@ import Link from "next/link";
 
 export default function ProductCard({ product }) {
   const isAvailable = product.status === "Active";
+  const imageUrl = product.imageUrl;
 
   return (
     <Link
@@ -14,9 +15,9 @@ export default function ProductCard({ product }) {
     >
       {/* Product Image */}
       <div className="w-full h-48 bg-gray-100 relative overflow-hidden flex items-center justify-center">
-        {product.image ? (
+        {imageUrl ? (
           <img
-            src={product.image}
+            src={imageUrl}
             alt={product.title}
             className={`w-full h-full object-cover transition duration-300 ${
               isAvailable ? "group-hover:scale-105" : "grayscale-30"

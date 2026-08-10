@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function VerifyPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <VerifyContent />
+    </Suspense>
+  );
+}
+
+function VerifyContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -61,7 +69,7 @@ export default function VerifyPage() {
               marginBottom: "30px",
             }}
           >
-            Confirm the campus handover by entering the buyer's 6-digit PIN.
+            Confirm the campus handover by entering the buyer&apos;s 6-digit PIN.
           </p>
 
           {/* Transaction Information */}
@@ -176,7 +184,7 @@ export default function VerifyPage() {
               marginTop: "15px",
             }}
           >
-            Escrow funds have been released to the seller's OneCard account.
+            Escrow funds have been released to the seller&apos;s OneCard account.
           </p>
 
           <div
@@ -221,6 +229,10 @@ export default function VerifyPage() {
       )}
     </main>
   );
+}
+
+function PageLoading() {
+  return <div className="min-h-screen bg-gray-50" />;
 }
 
 function Info({ title, value }) {

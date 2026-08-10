@@ -1,10 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import QRCode from "react-qr-code";
 
 export default function EscrowPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <EscrowContent />
+    </Suspense>
+  );
+}
+
+function EscrowContent() {
   const searchParams = useSearchParams();
 
   const transaction = {
@@ -174,6 +183,10 @@ export default function EscrowPage() {
       </div>
     </div>
   );
+}
+
+function PageLoading() {
+  return <div className="min-h-screen bg-gray-50" />;
 }
 
 function Info({ title, value }) {

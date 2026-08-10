@@ -80,7 +80,7 @@ export default function ForgotPasswordPage() {
           marginBottom: "35px",
         }}
       >
-        Enter your official DIU email address and we'll send you a password reset link.
+        Enter your official DIU email address and we&apos;ll send you a password reset link.
       </p>
 
       {/* Success Notification */}

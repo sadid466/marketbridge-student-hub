@@ -1,12 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const registered = searchParams.get("registered");
@@ -21,7 +29,9 @@ export default function LoginPage() {
   // Automatically redirect authenticated users away from the login page
   useEffect(() => {
     if (status === "authenticated") {
-      router.push("/");
+      const redirect = localStorage.getItem("redirectAfterLogin") || "/";
+      localStorage.removeItem("redirectAfterLogin");
+      router.replace(redirect);
     }
   }, [status, router]);
 
@@ -38,11 +48,15 @@ export default function LoginPage() {
       });
 
       if (res?.error) {
-        setError(res.error);
-      } else {
-        router.push("/");
-        router.refresh();
-      }
+  setError(res.error);
+}
+
+function PageLoading() {
+  return <div className="min-h-screen bg-gray-50" />;
+}
+
+// Don't redirect here.
+// The useEffect will redirect automatically once the session is authenticated.
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
     } finally {
@@ -176,7 +190,7 @@ export default function LoginPage() {
             marginTop: "25px",
           }}
         >
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link
             href="/register"
             style={{

@@ -4,7 +4,12 @@ import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 
-const CATEGORIES = ["All", "Electronics", "Books", "Clothing"];
+const CATEGORIES = [
+  { value: "All", label: "All" },
+  { value: "💻 Electronics", label: "Electronics" },
+  { value: "📚 Books", label: "Books" },
+  { value: "👕 Clothing", label: "Clothing" },
+];
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -95,15 +100,15 @@ export default function Home() {
           <div className="flex items-center gap-2 overflow-x-auto pt-3 border-t border-gray-100 no-scrollbar">
             {CATEGORIES.map((cat) => (
               <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
+                key={cat.value}
+                onClick={() => setSelectedCategory(cat.value)}
                 className={`px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
-                  selectedCategory === cat
+                  selectedCategory === cat.value
                     ? "bg-blue-600 text-white shadow-xs"
                     : "bg-gray-100/80 hover:bg-gray-200/80 text-gray-600"
                 }`}
               >
-                {cat}
+                {cat.label}
               </button>
             ))}
           </div>

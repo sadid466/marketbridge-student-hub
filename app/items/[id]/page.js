@@ -53,7 +53,7 @@ export default function ItemDetailsPage({ params: paramsPromise }) {
     setTimeout(() => {
       router.push(
         `/escrow?item=${encodeURIComponent(item.title)}&seller=${encodeURIComponent(
-          item.seller?.name || "DIU Student"
+          item.sellerId?.name || "DIU Student"
         )}&buyer=${encodeURIComponent(session.user.name)}&amount=${item.price}`
       );
     }, 2000);
@@ -97,9 +97,9 @@ export default function ItemDetailsPage({ params: paramsPromise }) {
           {/* Left: Product Image / Display */}
           <div className="md:col-span-1 space-y-4">
             <div className="w-full h-64 md:h-full bg-linear-to-tr from-blue-100 to-indigo-100 border border-gray-200 rounded-2xl flex items-center justify-center text-gray-400 font-medium overflow-hidden">
-              {item.image || item.imageUrl ? (
+              {item.imageUrl ? (
                 <img
-                  src={item.image || item.imageUrl}
+                  src={item.imageUrl}
                   alt={item.title}
                   className="w-full h-full object-cover"
                 />
@@ -131,14 +131,14 @@ export default function ItemDetailsPage({ params: paramsPromise }) {
               <div>
                 <p className="text-xs text-gray-400 uppercase font-bold">Seller</p>
                 <p className="font-bold text-gray-900 text-sm">
-                  {item.seller?.name || 'DIU Student'}
+                  {item.sellerId?.name || 'DIU Student'}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {item.seller?.department || 'Daffodil International University'}
+                  {item.sellerId?.department || 'Daffodil International University'}
                 </p>
               </div>
               <span className="text-sm font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-lg">
-                {item.seller?.rating || '5.0 ★'}
+                {item.sellerId?.rating || '5.0 ★'}
               </span>
             </div>
 

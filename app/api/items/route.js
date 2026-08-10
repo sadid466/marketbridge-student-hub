@@ -10,7 +10,7 @@ export async function GET(req) {
     await connectToDatabase();
 
     // Query items by seller if sellerId is provided, otherwise return all items
-    const query = sellerId ? { seller: sellerId } : {};
+    const query = sellerId ? { sellerId } : {};
     const items = await Product.find(query).sort({ createdAt: -1 });
 
     return NextResponse.json({ success: true, items }, { status: 200 });

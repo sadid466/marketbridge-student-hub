@@ -1,11 +1,45 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 export default function DashboardPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+function DashboardContent() {
+  const handleDeleteListing = async (id, title) => {
+    const confirmed = window.confirm(
+      `Delete "${title}"? This action cannot be undone.`,
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/items/${id}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to delete");
+      }
+
+      // Remove from UI immediately
+      setMyListings((prev) => prev.filter((item) => item._id !== id));
+
+      alert("Listing deleted successfully.");
+    } catch (err) {
+      alert(err.message);
+    }
+  };
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
@@ -16,24 +50,26 @@ export default function DashboardPage() {
   // Dynamic States initialized from DB
   const [myListings, setMyListings] = useState([]);
   const [purchases, setPurchases] = useState([]);
-  const [transactions, setTransactions] = useState([]);
   const [loadingListings, setLoadingListings] = useState(true);
 
-  const [userState, setUserState] = useState({
+  const [balanceAdjustment, setBalanceAdjustment] = useState({
     oneCardBalance: 0,
     escrowInHold: 0,
   });
+  const userState = {
+    oneCardBalance:
+      (session?.user?.oneCardBalance ?? 0) + balanceAdjustment.oneCardBalance,
+    escrowInHold: Math.max(
+      0,
+      (session?.user?.escrowInHold ?? 0) + balanceAdjustment.escrowInHold,
+    ),
+  };
 
   // Fetch real items created by the logged-in student
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
     } else if (session?.user) {
-      setUserState({
-        oneCardBalance: session.user.oneCardBalance ?? 0,
-        escrowInHold: session.user.escrowInHold ?? 0,
-      });
-
       // Fetch user's real products safely
       fetch(`/api/items?sellerId=${session.user.id}`)
         .then((res) => {
@@ -58,13 +94,13 @@ export default function DashboardPage() {
   // Handle Cancel Trade / Refund
   const handleCancelPurchase = (purchaseId, amount, title) => {
     const confirmed = window.confirm(
-      `Are you sure you want to cancel the purchase for "${title}"? ৳${amount} will be refunded immediately to your OneCard.`
+      `Are you sure you want to cancel the purchase for "${title}"? ৳${amount} will be refunded immediately to your OneCard.`,
     );
 
     if (!confirmed) return;
 
     setPurchases((prev) => prev.filter((item) => item.id !== purchaseId));
-    setUserState((prev) => ({
+    setBalanceAdjustment((prev) => ({
       ...prev,
       oneCardBalance: prev.oneCardBalance + amount,
       escrowInHold: Math.max(0, prev.escrowInHold - amount),
@@ -84,7 +120,6 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-gray-50 py-10 px-4 md:px-8">
       <div className="max-w-5xl mx-auto space-y-8">
-        
         {/* Profile Header */}
         <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
@@ -186,7 +221,7 @@ export default function DashboardPage() {
                 ) : myListings.length === 0 ? (
                   <div className="text-center py-12 space-y-3">
                     <p className="text-gray-400 text-sm font-medium">
-                      You haven't listed any items for sale yet.
+                      You haven&apos;t listed any items for sale yet.
                     </p>
                     <Link
                       href="/sell"
@@ -220,6 +255,15 @@ export default function DashboardPage() {
                         >
                           Verify Handover
                         </Link>
+
+                        <button
+                          onClick={() =>
+                            handleDeleteListing(item._id, item.title)
+                          }
+                          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition shadow-sm cursor-pointer"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                   ))
@@ -292,7 +336,7 @@ export default function DashboardPage() {
                             handleCancelPurchase(
                               purchase.id,
                               purchase.amount,
-                              purchase.title
+                              purchase.title,
                             )
                           }
                           className="text-xs font-semibold text-gray-400 hover:text-red-600 hover:underline transition py-1 cursor-pointer"
@@ -337,5 +381,13 @@ export default function DashboardPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+function PageLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <p className="text-gray-500 font-medium">Loading dashboard...</p>
+    </div>
   );
 }
