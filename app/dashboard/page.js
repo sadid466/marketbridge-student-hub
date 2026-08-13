@@ -1,15 +1,15 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<PageLoading />}>
+   
       <DashboardContent />
-    </Suspense>
+    
   );
 }
 
@@ -50,6 +50,7 @@ function DashboardContent() {
   // Dynamic States initialized from DB
   const [myListings, setMyListings] = useState([]);
   const [purchases, setPurchases] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [loadingListings, setLoadingListings] = useState(true);
 
   const [balanceAdjustment, setBalanceAdjustment] = useState({
