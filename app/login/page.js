@@ -8,9 +8,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<PageLoading />}>
+   
       <LoginContent />
-    </Suspense>
+  
   );
 }
 

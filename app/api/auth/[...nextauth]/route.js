@@ -2,8 +2,35 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
+import { randomUUID } from "crypto";
 import { connectToDatabase } from "@/lib/database";
 import User from "@/models/User";
+
+async function getOrCreateGoogleUser({ name, email, providerAccountId }) {
+  await connectToDatabase();
+
+  let mongoUser = await User.findOne({ email });
+
+  if (!mongoUser) {
+    try {
+      mongoUser = await User.create({
+        name: name || "DIU Student",
+        email,
+        // Google does not provide a DIU student ID or password. These required
+        // credential fields are deliberately non-login values for OAuth users.
+        studentId: `google-${providerAccountId}`,
+        password: await bcrypt.hash(randomUUID(), 12),
+      });
+    } catch (error) {
+      // A concurrent Google sign-in can create the same email first.
+      if (error?.code !== 11000) throw error;
+      mongoUser = await User.findOne({ email });
+      if (!mongoUser) throw error;
+    }
+  }
+
+  return mongoUser;
+}
 
 export const authOptions = {
   providers: [
@@ -55,17 +82,30 @@ export const authOptions = {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
         // Ensure Google Sign-In only allows @diu.edu.bd emails
-        if (!user.email?.endsWith("@diu.edu.bd")) {
+        if (!user.email?.toLowerCase().endsWith("@diu.edu.bd")) {
           return false; // Blocks sign-in if not a DIU email
         }
       }
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
-        token.id = user.id;
-        token.studentId = user.studentId;
-        token.department = user.department;
+        if (account?.provider === "google") {
+          const mongoUser = await getOrCreateGoogleUser({
+            name: user.name,
+            email: user.email,
+            providerAccountId: account.providerAccountId,
+          });
+
+          token.id = mongoUser._id.toString();
+          token.studentId = mongoUser.studentId;
+          token.department = mongoUser.department;
+        } else {
+          // CredentialsProvider already returns the MongoDB ObjectId.
+          token.id = user.id;
+          token.studentId = user.studentId;
+          token.department = user.department;
+        }
       }
       return token;
     },
