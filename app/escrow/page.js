@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import QRCode from "react-qr-code";
 
@@ -15,16 +15,75 @@ export default function EscrowPage() {
 
 function EscrowContent() {
   const searchParams = useSearchParams();
+  const tradeId = searchParams.get("tradeId");
 
-  const transaction = {
-    transactionId: "MB-2026-0001",
-    product: searchParams.get("item") || "Campus Item",
-    seller: searchParams.get("seller") || "DIU Student",
-    buyer: searchParams.get("buyer") || "Current User",
-    amount: searchParams.get("amount") || 0,
-    pin: "123456",
-    status: "Escrow Hold",
-  };
+  const [trade, setTrade] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!tradeId) {
+      setError("No transaction ID provided.");
+      setLoading(false);
+      return;
+    }
+
+    fetch(`/api/escrow?tradeId=${tradeId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load transaction.");
+        return res.json();
+      })
+      .then((data) => {
+        if (data.success) {
+          setTrade(data.trade);
+        } else {
+          setError(data.error || "Transaction could not be found.");
+        }
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [tradeId]);
+
+  if (loading) {
+    return <PageLoading />;
+  }
+
+  if (error || !trade) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#f3f4f6",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          padding: "40px",
+        }}
+      >
+        <p style={{ color: "#ef4444", fontWeight: "600", fontSize: "18px" }}>
+          {error || "Escrow transaction not found."}
+        </p>
+        <Link
+          href="/"
+          style={{
+            marginTop: "16px",
+            color: "#2563eb",
+            fontWeight: "600",
+            textDecoration: "underline",
+          }}
+        >
+          Return to Marketplace
+        </Link>
+      </div>
+    );
+  }
+
+  const qrPayload = JSON.stringify({
+    tradeId: trade._id,
+    pin: trade.verificationPin,
+    amount: trade.amount,
+  });
 
   return (
     <div
@@ -68,11 +127,11 @@ function EscrowContent() {
 
         <hr />
 
-        <Info title="Transaction ID" value={transaction.transactionId} />
-        <Info title="Product" value={transaction.product} />
-        <Info title="Seller" value={transaction.seller} />
-        <Info title="Buyer" value={transaction.buyer} />
-        <Info title="Amount" value={`৳ ${transaction.amount}`} />
+        <Info title="Transaction ID" value={trade._id} />
+        <Info title="Product" value={trade.productId?.title || "Campus Item"} />
+        <Info title="Seller" value={trade.sellerId?.name || "DIU Student"} />
+        <Info title="Buyer" value={trade.buyerId?.name || "Current User"} />
+        <Info title="Amount" value={`৳ ${trade.amount}`} />
 
         <div
           style={{
@@ -86,14 +145,14 @@ function EscrowContent() {
 
           <span
             style={{
-              background: "#FEF3C7",
-              color: "#92400E",
+              background: trade.status === "Completed" ? "#DCFCE7" : "#FEF3C7",
+              color: trade.status === "Completed" ? "#166534" : "#92400E",
               padding: "6px 12px",
               borderRadius: "20px",
               fontWeight: "bold",
             }}
           >
-            {transaction.status}
+            {trade.status}
           </span>
         </div>
 
@@ -114,7 +173,7 @@ function EscrowContent() {
               fontSize: "38px",
             }}
           >
-            {transaction.pin}
+            {trade.verificationPin}
           </h1>
 
           <div
@@ -124,7 +183,7 @@ function EscrowContent() {
               justifyContent: "center",
             }}
           >
-            <QRCode value={JSON.stringify(transaction)} size={170} />
+            <QRCode value={qrPayload} size={170} />
           </div>
 
           <p
@@ -177,8 +236,6 @@ function EscrowContent() {
               Continue Browsing
             </Link>
           </div>
-
-          
         </div>
       </div>
     </div>
@@ -186,7 +243,21 @@ function EscrowContent() {
 }
 
 function PageLoading() {
-  return <div className="min-h-screen bg-gray-50" />;
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "#f3f4f6",
+        color: "#666",
+        fontWeight: "500",
+      }}
+    >
+      Loading escrow details...
+    </div>
+  );
 }
 
 function Info({ title, value }) {

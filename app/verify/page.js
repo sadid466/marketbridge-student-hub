@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -15,29 +15,106 @@ export default function VerifyPage() {
 function VerifyContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const tradeId = searchParams.get("tradeId");
 
-  const item = searchParams.get("item") || "Campus Item";
-  const buyer = searchParams.get("buyer") || "Buyer";
-  const amount = searchParams.get("amount") || "0";
-
+  const [trade, setTrade] = useState(null);
   const [pin, setPin] = useState("");
   const [verified, setVerified] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const correctPin = "123456";
+  useEffect(() => {
+    if (!tradeId) {
+      setError("No transaction ID provided.");
+      setLoading(false);
+      return;
+    }
 
-  const handleVerify = () => {
-    if (pin === correctPin) {
-        localStorage.setItem("transactionCompleted", "true");
+    fetch(`/api/escrow?tradeId=${tradeId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load transaction details.");
+        return res.json();
+      })
+      .then((data) => {
+        if (data.success) {
+          setTrade(data.trade);
+        } else {
+          setError(data.error || "Transaction could not be found.");
+        }
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [tradeId]);
+
+  const handleVerify = async () => {
+    if (!pin || pin.trim().length !== 6) {
+      alert("Please enter a valid 6-digit PIN.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/escrow/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tradeId, pin: pin.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Invalid Verification PIN");
+      }
+
       setVerified(true);
 
       // Automatically return to Dashboard after 2.5 seconds
       setTimeout(() => {
         router.push("/dashboard?tab=purchases");
       }, 2500);
-    } else {
-      alert("Invalid Verification PIN");
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return <PageLoading />;
+  }
+
+  if (error || !trade) {
+    return (
+      <main
+        style={{
+          maxWidth: "700px",
+          margin: "60px auto",
+          padding: "40px",
+          background: "#fff",
+          borderRadius: "16px",
+          boxShadow: "0 8px 25px rgba(0,0,0,.1)",
+          textAlign: "center",
+        }}
+      >
+        <p style={{ color: "#ef4444", fontWeight: "600", fontSize: "18px" }}>
+          {error || "Transaction not found."}
+        </p>
+        <Link
+          href="/dashboard"
+          style={{
+            display: "inline-block",
+            marginTop: "20px",
+            color: "#2563eb",
+            fontWeight: "600",
+            textDecoration: "underline",
+          }}
+        >
+          Back to Dashboard
+        </Link>
+      </main>
+    );
+  }
 
   return (
     <main
@@ -82,9 +159,9 @@ function VerifyContent() {
               marginBottom: "30px",
             }}
           >
-            <Info title="Buyer" value={buyer} />
-            <Info title="Product" value={item} />
-            <Info title="Amount" value={`৳ ${amount}`} />
+            <Info title="Buyer" value={trade.buyerId?.name || "Buyer"} />
+            <Info title="Product" value={trade.productId?.title || "Campus Item"} />
+            <Info title="Amount" value={`৳ ${trade.amount}`} />
 
             <div
               style={{
@@ -97,14 +174,14 @@ function VerifyContent() {
 
               <span
                 style={{
-                  background: "#FEF3C7",
-                  color: "#92400E",
+                  background: trade.status === "Completed" ? "#DCFCE7" : "#FEF3C7",
+                  color: trade.status === "Completed" ? "#166534" : "#92400E",
                   padding: "6px 12px",
                   borderRadius: "20px",
                   fontWeight: "bold",
                 }}
               >
-                Escrow Hold
+                {trade.status}
               </span>
             </div>
           </div>
@@ -140,19 +217,20 @@ function VerifyContent() {
 
           <button
             onClick={handleVerify}
+            disabled={submitting}
             style={{
               width: "100%",
               marginTop: "30px",
               padding: "15px",
-              background: "#2563eb",
+              background: submitting ? "#93c5fd" : "#2563eb",
               color: "#fff",
               border: "none",
               borderRadius: "8px",
               fontSize: "18px",
-              cursor: "pointer",
+              cursor: submitting ? "not-allowed" : "pointer",
             }}
           >
-            Verify Transaction
+            {submitting ? "Verifying..." : "Verify Transaction"}
           </button>
         </>
       ) : (
@@ -204,7 +282,7 @@ function VerifyContent() {
                 margin: "10px 0",
               }}
             >
-              + ৳ {amount}
+              + ৳ {trade.amount}
             </h1>
 
             <p>Returning to Dashboard...</p>
@@ -232,7 +310,21 @@ function VerifyContent() {
 }
 
 function PageLoading() {
-  return <div className="min-h-screen bg-gray-50" />;
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "#f3f4f6",
+        color: "#666",
+        fontWeight: "500",
+      }}
+    >
+      Loading verification details...
+    </div>
+  );
 }
 
 function Info({ title, value }) {

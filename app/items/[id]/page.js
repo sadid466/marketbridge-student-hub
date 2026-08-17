@@ -34,29 +34,34 @@ export default function ItemDetailsPage({ params: paramsPromise }) {
       .finally(() => setLoading(false));
   }, [itemId]);
 
-  const handleConfirmEscrow = () => {
+  const handleConfirmEscrow = async () => {
     if (!session) {
       alert("Please log in to make a purchase.");
       router.push(`/login?callbackUrl=/items/${itemId}`);
       return;
     }
 
-    const currentBalance = session.user?.oneCardBalance ?? 0;
+    try {
+      const res = await fetch("/api/escrow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: itemId }),
+      });
 
-    if (currentBalance < item.price) {
-      alert("Insufficient OneCard Balance!");
-      return;
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to initiate escrow.");
+      }
+
+      setPurchaseSuccess(true);
+
+      setTimeout(() => {
+        router.push(`/escrow?tradeId=${data.tradeId}`);
+      }, 1500);
+    } catch (err) {
+      alert(err.message);
     }
-
-    setPurchaseSuccess(true);
-
-    setTimeout(() => {
-      router.push(
-        `/escrow?item=${encodeURIComponent(item.title)}&seller=${encodeURIComponent(
-          item.sellerId?.name || "DIU Student"
-        )}&buyer=${encodeURIComponent(session.user.name)}&amount=${item.price}`
-      );
-    }, 2000);
   };
 
   if (loading) {

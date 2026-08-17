@@ -110,10 +110,21 @@ export const authOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (session?.user && token?.id) {
         session.user.id = token.id;
         session.user.studentId = token.studentId;
         session.user.department = token.department;
+
+        // Fetch live balances from MongoDB to ensure real-time accuracy across page navigations
+        await connectToDatabase();
+        const freshUser = await User.findById(token.id).select(
+          "oneCardBalance escrowInHold"
+        );
+
+        if (freshUser) {
+          session.user.oneCardBalance = freshUser.oneCardBalance ?? 0;
+          session.user.escrowInHold = freshUser.escrowInHold ?? 0;
+        }
       }
       return session;
     },
