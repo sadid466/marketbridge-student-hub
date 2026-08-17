@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect,} from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { signIn, useSession } from "next-auth/react";
@@ -8,9 +8,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   return (
-   
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="text-gray-500">Loading...</p></div>}>
       <LoginContent />
-  
+    </Suspense>
   );
 }
 
