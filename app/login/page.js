@@ -8,9 +8,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   return (
-   
+    <Suspense fallback={<PageLoading />}>
       <LoginContent />
-  
+    </Suspense>
   );
 }
 
@@ -48,15 +48,11 @@ function LoginContent() {
       });
 
       if (res?.error) {
-  setError(res.error);
-}
+        setError(res.error);
+      }
 
-function PageLoading() {
-  return <div className="min-h-screen bg-gray-50" />;
-}
-
-// Don't redirect here.
-// The useEffect will redirect automatically once the session is authenticated.
+      // Don't redirect here.
+      // The useEffect will redirect automatically once the session is authenticated.
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
     } finally {
@@ -255,3 +251,8 @@ const googleButton = {
   fontSize: "17px",
   cursor: "pointer",
 };
+
+function PageLoading() {
+  return <div className="min-h-screen bg-gray-50" />;
+}
+

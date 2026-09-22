@@ -40,8 +40,41 @@ export async function POST(req) {
 
     await user.save();
 
+    // Determine the base URL reliably in both local and Vercel environments
+    let baseUrl = process.env.NEXTAUTH_URL?.trim();
+
+    const origin = req.headers.get("origin");
+    const forwardedHost =
+      req.headers.get("x-forwarded-host") || req.headers.get("host");
+    const forwardedProto = req.headers.get("x-forwarded-proto") || "https";
+
+    if (
+      !baseUrl ||
+      (baseUrl.includes("localhost") && origin && !origin.includes("localhost"))
+    ) {
+      if (origin) {
+        baseUrl = origin;
+      } else if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+        baseUrl = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+      } else if (process.env.VERCEL_URL) {
+        baseUrl = `https://${process.env.VERCEL_URL}`;
+      } else if (forwardedHost) {
+        baseUrl = `${forwardedProto}://${forwardedHost}`;
+      }
+    }
+
+    if (!baseUrl) {
+      baseUrl =
+        origin ||
+        (forwardedHost
+          ? `${forwardedProto}://${forwardedHost}`
+          : "http://localhost:3000");
+    }
+
+    baseUrl = baseUrl.replace(/\/+$/, "");
+
     // Create reset URL
-    const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${resetToken}`;
+    const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
 
     // Send email
     await sendEmail({

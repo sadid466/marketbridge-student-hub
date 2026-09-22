@@ -7,6 +7,11 @@ const UserSchema = new mongoose.Schema(
     studentId: { type: String, required: true, unique: true },
     password: { type: String, required: true },
 
+    department: {
+      type: String,
+      default: "General",
+    },
+
     oneCardBalance: { type: Number, default: 0 },
     escrowInHold: { type: Number, default: 0 },
 
@@ -24,8 +29,4 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-if (mongoose.models.User) {
-  delete mongoose.models.User;
-}
-
-export default mongoose.model("User", UserSchema);
+export default mongoose.models.User || mongoose.model("User", UserSchema);

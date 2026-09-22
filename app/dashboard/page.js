@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 export default function DashboardPage() {
   return (
-   
+    <Suspense fallback={<PageLoading />}>
       <DashboardContent />
-    
+    </Suspense>
   );
 }
 
